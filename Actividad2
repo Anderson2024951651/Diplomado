@@ -1,0 +1,225 @@
+import numpy as np 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.metrics import mean_squared_error
+
+x = np.random.uniform(0, 3, 1000)
+
+y = 5 + 2 * x + np.random.uniform(2, 4, 1000)
+
+plt.figure(figsize=[8,6])
+plt.title("Gráfico de dispersión")
+plt.xlabel("Variable Independiente X")
+plt.ylabel("Variable Dependiente Y")
+plt.scatter(x, y, c= '#008080', alpha= 0.5)
+plt.show()
+
+def visualizar(self, y, x, num):
+
+    plt.figure(figsize=[8,6])
+    plt.title("Scatter Plot")
+    plt.xlabel("Variable Independiente X")
+    plt.ylabel("Variable Dependiente Y")
+    plt.scatter(x[:num], y[:num], c='#008080', alpha=0.5)
+
+    option = int(input("(1) Para visualizar | (2) Para Guardar: "))
+    if option == 1:
+        plt.show()
+    elif option == 2:
+        plt.savefig("imagen1.jpg")
+
+def optimizar( y, x):
+    X = np.array([[i, 1] for i in x])
+    theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), y)
+    return theta
+
+def resultado( x, y, m, b, num):
+    plt.figure()
+    plt.scatter(x[:num], y[:num], marker = '.',c='#008080', alpha=0.5)
+    x2 = np.linspace(0, max(x), 1000)
+    y2 = m*x2 + b
+    plt.plot(x2, y2, c='#ff0000')
+    plt.show()
+
+
+
+m, b = optimizar(y, x)
+resultado(x, y, m, b, -1)
+
+class regressionLineal():
+
+    def __init__(self, tipoDeDatos, N):
+        self.tipoDeDatos = tipoDeDatos
+        self.tamano = N
+
+    def visualizar(self, y, x, num):
+
+        plt.figure(figsize=[8,6])
+        plt.title("Scatter Plot")
+        plt.xlabel("Variable Independiente X")
+        plt.ylabel("Variable Dependiente Y")
+        plt.scatter(x[:num], y[:num], c='#008080', alpha=0.5)
+
+        option = int(input("(1) Para visualizar | (2) Para Guardar: "))
+        if option == 1:
+            plt.show()
+        elif option == 2:
+            plt.savefig("imagen1.jpg")
+
+    def optimizar(self, y, x):
+        X = np.array([[i, 1] for i in x])
+        theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), y)
+        return theta
+    
+    def resultado(self, x, y, m, b, num):
+        plt.figure()
+        plt.scatter(x[:num], y[:num], marker = '.',c='#008080', alpha=0.5)
+        x2 = np.linspace(0, max(x), 1000)
+        y2 = m*x2 + b
+        plt.plot(x2, y2, c='#ff0000')
+        plt.show()
+
+tabla = pd.read_csv('measurements.csv')
+print(tabla.head())
+
+print(tabla.dtypes)
+
+Variables = ['distance', 'consume', 'temp_inside', 'refill liters']
+
+for columna in Variables:
+    tabla[columna] = tabla[columna].str.replace(',', '.').astype(float)
+
+print(tabla.dtypes)
+
+plt.figure(figsize=[8,6])
+plt.scatter(tabla['distance'], tabla['speed'], c='#880e4f', alpha=0.5)
+plt.title("Diagrama de dispersión de Distancia vs. Velocidad")
+plt.xlabel("Distancia")
+plt.ylabel("Velocidad")
+plt.grid(True)
+
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+
+plt.show()
+
+plt.figure(figsize=[8,6])
+plt.scatter(tabla['consume'], tabla['distance'], c='#e65100', alpha=0.5)
+plt.title("Diagrama de dispersión de Distancia vs. Consumo")
+plt.xlabel("Consumo")
+plt.ylabel("Distancia")
+plt.grid(True)
+
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+
+plt.show()
+
+r2 = regressionLineal("real", len(tabla))
+
+m2, b2 = r2.optimizar(tabla['consume'],tabla['speed'])
+r2.resultado(tabla['speed'], tabla['consume'], m2, b2, len(tabla))
+
+print(m2,b2)
+
+n_samples = 30
+degrees = [1, 4, 15]
+
+
+plt.figure(figsize=(14, 5))
+for i in range(len(degrees)):
+    ax = plt.subplot(1, len(degrees), i + 1)
+    plt.setp(ax, xticks=(), yticks=())
+
+    polynomial_features = PolynomialFeatures(degree=degrees[i], include_bias=False)
+    linear_regression = LinearRegression()
+    pipeline = Pipeline(
+        [
+            ("polynomial_features", polynomial_features),
+            ("linear_regression", linear_regression),
+        ]
+    )
+    xNew = np.array(tabla['distance']).reshape((-1,1))
+    pipeline.fit(xNew, tabla['consume'])
+
+    scores = cross_val_score(
+        pipeline, xNew, tabla['consume'], scoring="neg_mean_squared_error", cv=10
+    )
+
+
+    plt.plot((np.linspace(min(xNew),max(xNew),1000)), pipeline.predict(np.linspace(min(xNew),max(xNew),1000)), label="Model")
+    plt.scatter(tabla['distance'], tabla['consume'], edgecolor="b", s=20, label="Samples",  c='#880e4f', alpha=0.5)
+    plt.xlabel("Distancia")
+    plt.ylabel("Consumo")
+
+    plt.legend(loc="best")
+    plt.title(
+        "Grado {}\n MSE = {:.2e}(+/- {:.2e})".format(
+            degrees[i], -scores.mean(), scores.std()
+        )
+    )
+plt.show()
+
+
+tabla2 = pd.read_csv('measurements.csv')
+
+tabla2['distance'] = tabla2['distance'].str.replace(',', '.').astype(float)
+tabla2['consume'] = tabla2['consume'].str.replace(',', '.').astype(float)
+
+X = tabla2[['distance']] 
+y = tabla2['consume']
+poly = PolynomialFeatures(degree=6)
+X_poly = poly.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X_poly, y, test_size=0.2, random_state=42)
+
+MSE=[]
+
+for x in range(1,101,1):
+    x = x/100
+    # Crear y ajustar el modelo Ridge
+    ridge = Ridge(alpha=x)
+    ridge.fit(X_train, y_train)
+    y_pred_ridge = ridge.predict(X_test)
+
+    # Crear y ajustar el modelo Lasso
+    lasso = Lasso(alpha=x)
+    lasso.fit(X_train, y_train)
+    y_pred_lasso = lasso.predict(X_test)
+
+    # Evaluar el desempeño de ambos modelos
+    mse_ridge = mean_squared_error(y_test, y_pred_ridge)
+    mse_lasso = mean_squared_error(y_test, y_pred_lasso)
+
+    MSE.append([float(x),float(mse_ridge),float(mse_lasso)])
+# Convertir los resultados a un DataFrame
+results_df = pd.DataFrame(MSE, columns=['Alpha', 'MSE_Ridge', 'MSE_Lasso'])
+
+print(MSE)
+
+
+plt.figure(figsize=[8,6])
+plt.title("Gráfico MSE Ridge")
+plt.xlabel("Alpha")
+plt.ylabel("MSE")
+plt.scatter(np.array(results_df['Alpha']), np.array(results_df['MSE_Ridge']), c= '#008080', alpha= 0.5)
+plt.show()
+
+
+plt.figure(figsize=[8,6])
+plt.title("Gráfico MSE Lasso")
+plt.xlabel("Alpha")
+plt.ylabel("MSE")
+plt.scatter(np.array(results_df['Alpha']), np.array(results_df['MSE_Lasso']), c= '#008080', alpha= 0.5)
+plt.show()
+
+
+  
